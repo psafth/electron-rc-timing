@@ -1,0 +1,47 @@
+{
+  "name": "electron-rc-timing",
+  "version": "1.0.0",
+  "description": "RC timing software for MyLaps hardware built on electron using react, typescript and MobX-State-Tree",
+  "main": "./dist/main.js",
+  "scripts": {
+    "dev:electron": "NODE_ENV=development webpack --config webpack.electron.config.js --mode development && electron .",
+    "dev:react": "NODE_ENV=development webpack-dev-server --config webpack.react.config.js --mode development",
+    "start": "concurrently --kill-others \"npm run dev:react\" \"npm run dev:electron\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/psafth/electron-rc-timing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/psafth/electron-rc-timing/issues"
+  },
+  "homepage": "https://github.com/psafth/electron-rc-timing#readme",
+  "devDependencies": {
+    "@babel/core": "^7.11.1",
+    "@babel/preset-env": "^7.11.0",
+    "@babel/preset-react": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@types/react": "^16.9.46",
+    "@types/react-dom": "^16.9.8",
+    "babel-loader": "^8.1.0",
+    "concurrently": "^5.3.0",
+    "electron": "^9.2.0",
+    "html-webpack-plugin": "^4.3.0",
+    "mobx": "^5.15.5",
+    "mobx-react": "^6.2.5",
+    "mobx-state-tree": "^3.17.2",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "ts-loader": "^8.0.2",
+    "typescript": "^3.9.7",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.2"
+  }
+}
