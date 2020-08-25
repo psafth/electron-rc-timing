@@ -39,12 +39,10 @@ function createWindow() {
   });
 
   decoder.on('time', (msg) => {
-    console.log("time", msg);
     mainWindow.webContents.send('amb-time', msg);
   })
 
   decoder.on('status', (msg) => {
-    // console.log("status", msg);
     mainWindow.webContents.send('amb-status', msg);
   });
 

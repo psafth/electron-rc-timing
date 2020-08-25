@@ -16,8 +16,6 @@ const App = observer(() => {
 
 
     ipcRenderer.on('amb-status', (event, msg) => {
-        console.log(msg) // prints "ping"
-
         AppStore.addStatus({
             time: new Date(),
             decoderId: msg.decoderId ?? "",
@@ -31,7 +29,7 @@ const App = observer(() => {
         AppStore.setConnected();
     })
 
-    ipcRenderer.on('amb-disconnect', (event, msg) => {
+    ipcRenderer.on('amb-disconnected', (event, msg) => {
         AppStore.setDisconnected();
     })
 

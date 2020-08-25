@@ -125,6 +125,9 @@ var __extends = this && this.__extends || function () {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var BufferHelper_1 = __webpack_require__(/*! ./utils/BufferHelper */ "../mylaps-amb/dist/utils/BufferHelper.js");
+
 var Mylaps;
 
 (function (Mylaps) {
@@ -154,16 +157,16 @@ var Mylaps;
       _this.EOR = 0x8f; // Value to subtract from escaped character (as byte)
 
       _this.ESCxB = 0x20;
-      _this.isConnected = false;
+      _this.broadcastAddress = '255.255.255.255';
+      _this.broadcastPort = 5303;
+      _this.IsConnected = false;
       _this.tcpClient = new net.Socket();
       _this.udpClient = new dgram.createSocket({
         type: "udp4",
         reuseAddr: true
       });
-      var broadcastAddress = '255.255.255.255';
-      var broadcastPort = 5303;
 
-      _this.udpClient.bind(broadcastPort);
+      _this.udpClient.bind(_this.broadcastPort);
 
       _this.udpClient.on('message', function (data) {
         _this.dataReceived(data);
@@ -195,7 +198,7 @@ var Mylaps;
 
 
       _this.tcpClient.on('connect', function (msg) {
-        _this.isConnected = true;
+        _this.IsConnected = true;
 
         _this.emit('connect', msg);
       });
@@ -234,7 +237,7 @@ var Mylaps;
 
 
       _this.tcpClient.on('close', function (msg) {
-        _this.isConnected = false;
+        _this.IsConnected = false;
 
         _this.emit('close', msg);
       });
@@ -251,7 +254,7 @@ var Mylaps;
 
     Communicator.prototype.sendDiscoverMessage = function () {
       var networkSettings = Buffer.from([0x8E, 0x02, 0x00, 0x00, 0x9C, 0x0D, 0x00, 0x00, 0x16, 0x00, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x08, 0x00, 0x0A, 0x00, 0x0C, 0x00, 0x8F]);
-      this.udpClient.send(networkSettings, 0, networkSettings.length, 5403, "255.255.255.255", function (err) {
+      this.udpClient.send(networkSettings, 0, networkSettings.length, 5403, this.broadcastAddress, function (err) {
         if (err) console.log(err);
       });
     };
@@ -264,7 +267,7 @@ var Mylaps;
     Communicator.prototype.connect = function (decoder) {
       var _this = this;
 
-      if (!this.isConnected) {
+      if (!this.IsConnected) {
         this.tcpClient.connect(5403, decoder.ipAddress, function () {
           _this.emit('connected');
         });
@@ -272,34 +275,49 @@ var Mylaps;
     };
 
     Communicator.prototype.dataReceived = function (data) {
-      // TODO: Rewrite this!
-      // Simple sanity check. Assumes that the buffer only contains one message. This might not be the case!
-      if (data[0] == this.SOR && data[data.length - 1] == this.EOR) {
-        var escapedData = this.unescape(data);
-        var rawMessage = this.handleData(escapedData);
+      var _this = this;
 
-        switch (rawMessage.type) {
-          case 1:
-            var passing = this.getPassingData(rawMessage);
-            this.emitPassing(passing);
-            break;
+      var messages = BufferHelper_1.BufferHelper.Split(data, this.EOR);
+      messages.forEach(function (message) {
+        // Simple sanity check. Assumes that the buffer only contains one message. This might not be the case!
+        if (data[0] == _this.SOR && data[data.length - 1] == _this.EOR) {
+          var escapedData = _this.unescape(data);
 
-          case 2:
-            var status_1 = this.getStatusData(rawMessage);
-            this.emitStatus(status_1);
-            break;
+          console.log("Escaped data", escapedData.toJSON());
 
-          case 0x16:
-            var networkSettings = this.getNetworkSettingsData(rawMessage);
-            this.connect(networkSettings);
-            break;
+          var rawMessage = _this.handleData(escapedData);
 
-          case 0x24:
-            var getTimeMessage = this.getTimeMessageData(rawMessage);
-            this.emitTime(getTimeMessage);
-            break;
+          switch (rawMessage.type) {
+            case 1:
+              var passing = _this.getPassingData(rawMessage);
+
+              _this.emitPassing(passing);
+
+              break;
+
+            case 2:
+              var status_1 = _this.getStatusData(rawMessage);
+
+              _this.emitStatus(status_1);
+
+              break;
+
+            case 0x16:
+              var networkSettings = _this.getNetworkSettingsData(rawMessage);
+
+              _this.connect(networkSettings);
+
+              break;
+
+            case 0x24:
+              var getTimeMessage = _this.getTimeMessageData(rawMessage);
+
+              _this.emitTime(getTimeMessage);
+
+              break;
+          }
         }
-      }
+      });
     };
 
     Communicator.prototype.emitTime = function (msg) {
@@ -338,7 +356,7 @@ var Mylaps;
         checksum: data.readUInt16LE(0x04),
         flags: data.readUInt16LE(0x06),
         type: data.readUInt16LE(0x08),
-        data: this.extractDataRows(data.slice(0x0A, data.indexOf(this.EOR)))
+        data: this.extractDataRows(data.slice(0x0A, data.lastIndexOf(this.EOR)))
       };
     };
 
@@ -381,7 +399,14 @@ var Mylaps;
         if (dataToEscape[i] == this.ESC && i + 1 < dataToEscape.length - 1) {
           // ESC byte found. Get the following byte and subtract with ESCxB.
           var _byte = dataToEscape[i + 1];
-          _byte -= this.ESCxB; // Store the value into the buffer.
+          _byte -= this.ESCxB;
+          console.log("Data:", dataToEscape.toJSON());
+          console.log("Escaping!", {
+            index: i,
+            length: dataToEscape.length,
+            dataToEscape: dataToEscape[i + 1],
+            escapedTo: _byte
+          }); // Store the value into the buffer.
 
           escapedData.push(_byte); // Skip one byte next iteration.
 
@@ -457,6 +482,7 @@ var Mylaps;
 
     Communicator.prototype.getStatusData = function (rawMessage) {
       var statusMessage = {};
+      console.log("status data", rawMessage.data.length);
       rawMessage.data.forEach(function (d) {
         switch (d.type) {
           case 0x81:
@@ -559,6 +585,52 @@ var Mylaps;
 
   Mylaps.Communicator = Communicator;
 })(Mylaps = exports.Mylaps || (exports.Mylaps = {}));
+
+/***/ }),
+
+/***/ "../mylaps-amb/dist/utils/BufferHelper.js":
+/*!************************************************!*\
+  !*** ../mylaps-amb/dist/utils/BufferHelper.js ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var BufferHelper =
+/** @class */
+function () {
+  function BufferHelper() {}
+
+  BufferHelper.Split = function (buffer, value, includeDelimiter) {
+    if (includeDelimiter === void 0) {
+      includeDelimiter = true;
+    }
+
+    var index;
+    var result = [];
+
+    while ((index = buffer.indexOf(value)) > -1) {
+      console.log("EOR", buffer.indexOf(value));
+      console.log("this", buffer.toJSON());
+      var move = index + (includeDelimiter ? 1 : 0);
+      result.push(buffer.slice(0, move));
+      buffer = buffer.slice(move);
+      console.log("next", buffer.toJSON());
+    }
+
+    return result;
+  };
+
+  return BufferHelper;
+}();
+
+exports.BufferHelper = BufferHelper;
 
 /***/ }),
 
@@ -1943,11 +2015,9 @@ function createWindow() {
     }, 60 * 1000);
   });
   decoder.on('time', function (msg) {
-    console.log("time", msg);
     mainWindow.webContents.send('amb-time', msg);
   });
   decoder.on('status', function (msg) {
-    // console.log("status", msg);
     mainWindow.webContents.send('amb-status', msg);
   });
   decoder.on('passing', function (msg) {
