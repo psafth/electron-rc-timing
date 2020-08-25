@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
-import { Mylaps } from '../../mylaps-amb/dist'
+import { Mylaps } from '../../../mylaps-amb/dist';
 
 let mainWindow: Electron.BrowserWindow | null;
 let getTimeInterval: NodeJS.Timeout | null;

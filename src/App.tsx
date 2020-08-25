@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDom from 'react-dom';
 import { Provider, observer } from 'mobx-react';
-import { AppStore } from "../models"
+import { AppStore } from "./models"
 import 'mobx-react-lite/batchingForReactDom'
-import StatusWindow from '../components/StatusWindow';
-import Timer from '../components/Timer';
+import StatusWindow from './components/StatusWindow';
+import Timer from './components/Timer';
 
 const mainElement = document.createElement('div');
 document.body.appendChild(mainElement);
