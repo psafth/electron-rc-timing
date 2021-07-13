@@ -30,16 +30,18 @@ export type TMylapsStore = {
     },
     statusMessages: StatusMessage[],
     passingMessages: PassingMessage[],
-    addStatus(msg: StatusMessage)
-    addPassing(msg: PassingMessage),
-    totalPassings(): number | undefined,
-    noise(): number | undefined
+    addStatus(msg: StatusMessage): void,
+    addPassing(msg: PassingMessage): void,
+    totalPassings: number | undefined,
+    noise: number | undefined,
+    temperature: number | undefined,
+    voltage: number | undefined
 }
 
 export const MyLapsProvider = ({ children }) => {
-     const mylapsStore = useLocalStore<TMylapsStore>(() => ({
+    const mylapsStore: TMylapsStore = useLocalStore<TMylapsStore>(() => ({
         decoder: {
-            id: undefined as string,
+            id: '',
             status: DecoderStatus.Disconnected,
         },
         statusMessages: [] as StatusMessage[],
@@ -50,11 +52,17 @@ export const MyLapsProvider = ({ children }) => {
         addPassing(msg: PassingMessage) {
             mylapsStore.passingMessages.push(msg);
         },
-        get totalPassings(){
-            return mylapsStore.passingMessages.length;
+        get totalPassings() {
+            return mylapsStore?.passingMessages?.length;
         },
-        get noise(){
+        get noise() {
             return mylapsStore.statusMessages.length > 0 ? mylapsStore.statusMessages[mylapsStore.statusMessages.length - 1].noise : undefined;
+        },
+        get temperature() {
+            return mylapsStore.statusMessages.length > 0 ? mylapsStore.statusMessages[mylapsStore.statusMessages.length - 1].temperature : undefined;
+        },
+        get voltage() {
+            return mylapsStore.statusMessages.length > 0 ? mylapsStore.statusMessages[mylapsStore.statusMessages.length - 1].voltage : undefined;
         }
     }));
 

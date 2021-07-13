@@ -5,6 +5,7 @@ import { MyLapsProvider, MyLapsContext, TMylapsStore, DecoderStatus } from "./mo
 import 'mobx-react-lite/batchingForReactDom'
 import StatusWindow from './components/StatusWindow';
 import Timer from './components/Timer';
+import StatusBar from './components/StatusBar';
 
 const mainElement = document.createElement('div');
 document.body.appendChild(mainElement);
@@ -25,11 +26,13 @@ const App = () => {
     });
 
     ipcRenderer.on('amb-connected', (event, msg) => {
+        console.debug("Connected, app");
         mylapsStore.decoder.status = DecoderStatus.Connected;
     })
 
 
     ipcRenderer.on('amb-disconnected', (event, msg) => {
+        console.debug("Disconnected, app");
         mylapsStore.decoder.status = DecoderStatus.Disconnected;
     })
 
@@ -49,10 +52,14 @@ const App = () => {
 
     return useObserver(() => (
         <>
+            <StatusBar />
+
             <h1>
                 <Timer />
             </h1>
+
             <StatusWindow />
+
         </>
     ));
 }

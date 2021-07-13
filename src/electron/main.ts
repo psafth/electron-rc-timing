@@ -62,6 +62,7 @@ function createWindow() {
   });
 
   decoder.on('connect', (msg) => {
+    console.debug("Connected, base.")
     mainWindow.webContents.send('amb-connected', msg);
   })
 
